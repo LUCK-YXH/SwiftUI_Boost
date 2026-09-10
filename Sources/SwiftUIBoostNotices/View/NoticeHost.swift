@@ -14,7 +14,6 @@ public struct NoticeHost: View {
       // 因此一律换算成窗口坐标系再和栏位边界比较，避免重复计入。
       let frame = proxy.frame(in: .global)
       let metrics = bars.metrics
-      let _ = logPlacement(frame: frame, metrics: metrics, proxy: proxy)
 
       ZStack {
         NoticePlacementStack(
@@ -47,25 +46,6 @@ public struct NoticeHost: View {
 
   private func notices(for placement: NoticePlacement) -> [NoticeRequest] {
     center.notices.filter { $0.options.placement == placement }
-  }
-
-  // TODO: 定位「根视图容器 toast 不显示」后删除
-  private func logPlacement(frame: CGRect, metrics: NoticeBarMetrics, proxy: GeometryProxy) {
-    #if DEBUG
-      guard !center.notices.isEmpty else { return }
-      print(
-        """
-        [NoticeHost] center=\(ObjectIdentifier(center)) count=\(center.notices.count) \
-        size=\(proxy.size) globalFrame=\(frame) \
-        safeArea=(top: \(proxy.safeAreaInsets.top), bottom: \(proxy.safeAreaInsets.bottom))
-        [NoticeHost] navBarMaxY=\(metrics.navigationBarMaxY) tabBarMinY=\(metrics.tabBarMinY) \
-        windowHeight=\(metrics.windowHeight)
-        [NoticeHost] topBoundary=\(metrics.topBoundary) bottomBoundary=\(metrics.bottomBoundary) \
-        topInset=\(max(0, metrics.topBoundary - frame.minY)) \
-        bottomInset=\(max(0, frame.maxY - metrics.bottomBoundary))
-        """
-      )
-    #endif
   }
 }
 

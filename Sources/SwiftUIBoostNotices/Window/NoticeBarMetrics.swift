@@ -4,17 +4,8 @@ import UIKit
 struct NoticeBarMetrics: Equatable {
   let topBoundary: CGFloat
   let bottomBoundary: CGFloat
-  let navigationBarMaxY: CGFloat
-  let tabBarMinY: CGFloat
-  let windowHeight: CGFloat
 
-  static let empty = NoticeBarMetrics(
-    topBoundary: 0,
-    bottomBoundary: .greatestFiniteMagnitude,
-    navigationBarMaxY: 0,
-    tabBarMinY: .greatestFiniteMagnitude,
-    windowHeight: 0
-  )
+  static let empty = NoticeBarMetrics(topBoundary: 0, bottomBoundary: .greatestFiniteMagnitude)
 
   // 必须在布局之外调用：在 body 求值期间读取正在布局的窗口会造成 AttributeGraph 成环。
   static var current: NoticeBarMetrics {
@@ -54,10 +45,7 @@ extension UIWindow {
 
     return NoticeBarMetrics(
       topBoundary: max(navigationBarMaxY, safeAreaInsets.top),
-      bottomBoundary: min(tabBarMinY, bounds.maxY - safeAreaInsets.bottom),
-      navigationBarMaxY: navigationBarMaxY,
-      tabBarMinY: tabBarMinY,
-      windowHeight: bounds.height
+      bottomBoundary: min(tabBarMinY, bounds.maxY - safeAreaInsets.bottom)
     )
   }
 
