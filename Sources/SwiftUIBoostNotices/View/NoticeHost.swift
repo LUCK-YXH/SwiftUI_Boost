@@ -2,39 +2,38 @@ import SwiftUI
 
 public struct NoticeHost: View {
   @ObservedObject private var center: NoticeCenter
-  private let additionalInsets: NoticeHostInsets
 
   public init(center: NoticeCenter) {
-    self.init(center: center, additionalInsets: .init())
-  }
-
-  init(center: NoticeCenter, additionalInsets: NoticeHostInsets) {
     self.center = center
-    self.additionalInsets = additionalInsets
   }
 
   public var body: some View {
     GeometryReader { proxy in
+      // 挂载位置不同，proxy.safeAreaInsets 的含义也不同（页面内已含导航栏，根视图外不含），
+      // 因此一律换算成窗口坐标系再和栏位边界比较，避免重复计入。
+      let frame = proxy.frame(in: .global)
+      let metrics = NoticeBarMetrics.current
+
       ZStack {
         NoticePlacementStack(
           center: center,
           notices: notices(for: .top),
           alignment: .top,
-          safeAreaInset: proxy.safeAreaInsets.top + additionalInsets.top
+          barInset: max(0, metrics.topBoundary - frame.minY)
         )
 
         NoticePlacementStack(
           center: center,
           notices: notices(for: .center),
           alignment: .center,
-          safeAreaInset: 0
+          barInset: 0
         )
 
         NoticePlacementStack(
           center: center,
           notices: notices(for: .bottom),
           alignment: .bottom,
-          safeAreaInset: proxy.safeAreaInsets.bottom + additionalInsets.bottom
+          barInset: max(0, frame.maxY - metrics.bottomBoundary)
         )
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -51,7 +50,7 @@ private struct NoticePlacementStack: View {
   let center: NoticeCenter
   let notices: [NoticeRequest]
   let alignment: Alignment
-  let safeAreaInset: CGFloat
+  let barInset: CGFloat
 
   var body: some View {
     VStack(spacing: 8) {
@@ -83,8 +82,8 @@ private struct NoticePlacementStack: View {
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
-    .padding(.top, alignment == .top ? safeAreaInset + 16 : 0)
-    .padding(.bottom, alignment == .bottom ? safeAreaInset + 16 : 0)
+    .padding(.top, alignment == .top ? barInset + 8 : 0)
+    .padding(.bottom, alignment == .bottom ? barInset + 24 : 0)
     .padding(.horizontal, 16)
   }
 
