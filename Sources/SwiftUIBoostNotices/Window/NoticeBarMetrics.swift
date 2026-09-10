@@ -4,10 +4,19 @@ import UIKit
 struct NoticeBarMetrics {
   let topBoundary: CGFloat
   let bottomBoundary: CGFloat
+  let navigationBarMaxY: CGFloat
+  let tabBarMinY: CGFloat
+  let windowHeight: CGFloat
 
   static var current: NoticeBarMetrics {
     UIWindow.noticeReferenceWindow?.noticeBarMetrics
-      ?? NoticeBarMetrics(topBoundary: 0, bottomBoundary: .greatestFiniteMagnitude)
+      ?? NoticeBarMetrics(
+        topBoundary: 0,
+        bottomBoundary: .greatestFiniteMagnitude,
+        navigationBarMaxY: 0,
+        tabBarMinY: .greatestFiniteMagnitude,
+        windowHeight: 0
+      )
   }
 }
 
@@ -43,7 +52,10 @@ extension UIWindow {
 
     return NoticeBarMetrics(
       topBoundary: max(navigationBarMaxY, safeAreaInsets.top),
-      bottomBoundary: min(tabBarMinY, bounds.maxY - safeAreaInsets.bottom)
+      bottomBoundary: min(tabBarMinY, bounds.maxY - safeAreaInsets.bottom),
+      navigationBarMaxY: navigationBarMaxY,
+      tabBarMinY: tabBarMinY,
+      windowHeight: bounds.height
     )
   }
 
