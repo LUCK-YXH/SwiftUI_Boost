@@ -56,7 +56,11 @@ final class NoticeWindowPresenter {
     window.backgroundColor = .clear
     window.isOpaque = false
     let rootViewController = NoticeWindowViewController(
-      rootView: NoticeWindowRootView(center: center, insets: insets)
+      rootView: NoticeWindowRootView(
+        center: center,
+        insets: insets,
+        hitRegions: window.hitRegions
+      )
     )
     rootViewController.onLayoutChange = { [weak self] in
       self?.updateInsets(for: scene)

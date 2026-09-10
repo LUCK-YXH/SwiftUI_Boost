@@ -67,6 +67,14 @@ private struct NoticePlacementStack: View {
           center.dismiss(id: request.id)
         }
         .frame(maxWidth: request.options.maxWidth)
+        .background(
+          GeometryReader { proxy in
+            Color.clear.preference(
+              key: NoticeHitRegionPreferenceKey.self,
+              value: [proxy.frame(in: .global)]
+            )
+          }
+        )
         .transition(transition(for: request.options.presentation))
       }
 
@@ -91,6 +99,14 @@ private struct NoticePlacementStack: View {
     case .none:
       return .identity
     }
+  }
+}
+
+struct NoticeHitRegionPreferenceKey: PreferenceKey {
+  static var defaultValue: [CGRect] { [] }
+
+  static func reduce(value: inout [CGRect], nextValue: () -> [CGRect]) {
+    value.append(contentsOf: nextValue())
   }
 }
 
