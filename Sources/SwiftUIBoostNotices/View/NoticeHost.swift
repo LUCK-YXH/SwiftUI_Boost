@@ -2,6 +2,7 @@ import SwiftUI
 
 public struct NoticeHost: View {
   @ObservedObject private var center: NoticeCenter
+  @ObservedObject private var bars = NoticeBarObserver.shared
 
   public init(center: NoticeCenter) {
     self.center = center
@@ -12,7 +13,7 @@ public struct NoticeHost: View {
       // 挂载位置不同，proxy.safeAreaInsets 的含义也不同（页面内已含导航栏，根视图外不含），
       // 因此一律换算成窗口坐标系再和栏位边界比较，避免重复计入。
       let frame = proxy.frame(in: .global)
-      let metrics = NoticeBarMetrics.current
+      let metrics = bars.metrics
       let _ = logPlacement(frame: frame, metrics: metrics, proxy: proxy)
 
       ZStack {
@@ -39,6 +40,8 @@ public struct NoticeHost: View {
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
       .animation(.easeInOut(duration: 0.22), value: center.notices.map(\.id))
+      .onAppear { bars.refresh() }
+      .onChange(of: center.notices.count) { _ in bars.refresh() }
     }
   }
 
@@ -52,7 +55,8 @@ public struct NoticeHost: View {
       guard !center.notices.isEmpty else { return }
       print(
         """
-        [NoticeHost] size=\(proxy.size) globalFrame=\(frame) \
+        [NoticeHost] center=\(ObjectIdentifier(center)) count=\(center.notices.count) \
+        size=\(proxy.size) globalFrame=\(frame) \
         safeArea=(top: \(proxy.safeAreaInsets.top), bottom: \(proxy.safeAreaInsets.bottom))
         [NoticeHost] navBarMaxY=\(metrics.navigationBarMaxY) tabBarMinY=\(metrics.tabBarMinY) \
         windowHeight=\(metrics.windowHeight)

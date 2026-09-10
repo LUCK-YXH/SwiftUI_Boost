@@ -1,22 +1,24 @@
 import UIKit
 
 /// 窗口坐标系下的可用内容边界，用于把 Toast 对齐到导航栏和 Tab 栏，而不是安全区。
-struct NoticeBarMetrics {
+struct NoticeBarMetrics: Equatable {
   let topBoundary: CGFloat
   let bottomBoundary: CGFloat
   let navigationBarMaxY: CGFloat
   let tabBarMinY: CGFloat
   let windowHeight: CGFloat
 
+  static let empty = NoticeBarMetrics(
+    topBoundary: 0,
+    bottomBoundary: .greatestFiniteMagnitude,
+    navigationBarMaxY: 0,
+    tabBarMinY: .greatestFiniteMagnitude,
+    windowHeight: 0
+  )
+
+  // 必须在布局之外调用：在 body 求值期间读取正在布局的窗口会造成 AttributeGraph 成环。
   static var current: NoticeBarMetrics {
-    UIWindow.noticeReferenceWindow?.noticeBarMetrics
-      ?? NoticeBarMetrics(
-        topBoundary: 0,
-        bottomBoundary: .greatestFiniteMagnitude,
-        navigationBarMaxY: 0,
-        tabBarMinY: .greatestFiniteMagnitude,
-        windowHeight: 0
-      )
+    UIWindow.noticeReferenceWindow?.noticeBarMetrics ?? .empty
   }
 }
 
