@@ -568,7 +568,7 @@ private struct ComponentsDemoView: View {
           overlays.present(
             .init(
               title: "Block Maya?",
-              message: "She won't be able to reach you or see your profile.",
+              subtitle: "She won't be able to reach you or see your profile.",
               actions: [
                 .init("Cancel", style: .cancel),
                 .init("Block", style: .destructive) {}
@@ -581,7 +581,7 @@ private struct ComponentsDemoView: View {
           overlays.present(
             .init(
               title: "已保存",
-              message: "你的修改已经同步到云端。",
+              subtitle: "你的修改已经同步到云端。",
               actions: [.init("知道了", style: .primary) {}]
             )
           )
@@ -616,7 +616,7 @@ private struct ComponentsDemoView: View {
               icon: .system("bell.badge.fill"),
               iconBackground: Color(red: 0.98, green: 0.95, blue: 0.88),
               title: "Turn on alerts?",
-              message: "Get notified the moment someone buzzes you.",
+              subtitle: "Get notified the moment someone buzzes you.",
               actions: [
                 .init("Not now", style: .cancel),
                 .init("Allow", style: .primary) {}

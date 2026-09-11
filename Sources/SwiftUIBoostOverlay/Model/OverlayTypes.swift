@@ -127,7 +127,7 @@ public struct OverlayRequest: Identifiable {
     style: OverlayStyle = .alert,
     icon: OverlayIcon? = nil,
     iconBackground: Color? = nil,
-    title: String,
+    title: String = "",
     subtitle: String? = nil,
     actions: [OverlayAction] = [],
     buttonLayout: OverlayButtonLayout = .automatic,
@@ -152,23 +152,6 @@ public struct OverlayRequest: Identifiable {
     self.transition = transition
     self.customContent = nil
     self.onDismiss = onDismiss
-  }
-
-  /// Compatibility initializer for the original `message` spelling.
-  public init(
-    style: OverlayStyle = .alert,
-    title: String,
-    message: String? = nil,
-    actions: [OverlayAction] = [],
-    dismissOnBackgroundTap: Bool = true
-  ) {
-    self.init(
-      style: style,
-      title: title,
-      subtitle: message,
-      actions: actions,
-      dismissOnBackgroundTap: dismissOnBackgroundTap
-    )
   }
 
   public static func custom<Content: View>(

@@ -163,7 +163,7 @@ final class SwiftUIBoostTests: XCTestCase {
 
     coordinator.present(first)
     let action = try! XCTUnwrap(coordinator.request?.actions.first)
-    action.action()
+    action.action?()
 
     XCTAssertEqual(coordinator.request?.id, replacement.id)
   }
