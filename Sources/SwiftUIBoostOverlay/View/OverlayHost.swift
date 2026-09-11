@@ -9,6 +9,10 @@ public struct OverlayHost: View {
   @ObservedObject private var coordinator: OverlayCoordinator
   private let theme: OverlayTheme
   @State private var lastStyle: OverlayStyle = .alert
+  /// 内部镜像的当前请求：仅通过 `withAnimation` 一次性事务更新，
+  /// 避免用持久隐式动画（`.animation(_, value:)`）意外把卡片二次布局测量也一并动画，
+  /// 从而消除弹窗「显示后高度再变化」的抖动。
+  @State private var current: OverlayRequest?
 
   public init(coordinator: OverlayCoordinator, theme: OverlayTheme = .default) {
     self.coordinator = coordinator
@@ -18,7 +22,7 @@ public struct OverlayHost: View {
   public var body: some View {
     GeometryReader { proxy in
       ZStack {
-        if let request = coordinator.request {
+        if let request = current {
           dimColor(for: request)
             .ignoresSafeArea()
             .contentShape(Rectangle())
@@ -38,19 +42,29 @@ public struct OverlayHost: View {
         }
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
-      .animation(animation(for: coordinator.request?.style ?? lastStyle), value: coordinator.request?.id)
     }
     .ignoresSafeArea()
-    .allowsHitTesting(coordinator.request != nil)
-    .onChange(of: coordinator.request?.id) { _ in
-      if let style = coordinator.request?.style { lastStyle = style }
+    .allowsHitTesting(current != nil)
+    .onAppear { sync(animated: false) }
+    .onChange(of: coordinator.request?.id) { _ in sync() }
+  }
+
+  /// 将外部 `coordinator.request` 同步到内部 `current`，并把这次变化包进一次性动画事务。
+  private func sync(animated: Bool = true) {
+    let new = coordinator.request
+    guard new?.id != current?.id else { return }
+    let style = new?.style ?? current?.style ?? lastStyle
+    if let style = new?.style { lastStyle = style }
+    if animated {
+      withAnimation(animation(for: style)) { current = new }
+    } else {
+      current = new
     }
   }
 
   private func dismiss(_ request: OverlayRequest, reason: OverlayDismissReason) {
-    withAnimation(animation(for: request.style)) {
-      coordinator.dismiss(id: request.id, reason: reason)
-    }
+    // 仅改动外部状态；由 `onChange` 统一用 `withAnimation` 播放离场，避免双重动画。
+    coordinator.dismiss(id: request.id, reason: reason)
   }
 
   private func dimColor(for request: OverlayRequest) -> Color {
