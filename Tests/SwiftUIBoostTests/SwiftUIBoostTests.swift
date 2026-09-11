@@ -110,6 +110,7 @@ final class SwiftUIBoostTests: XCTestCase {
     XCTAssertEqual(mascot.overhang, 60, accuracy: 0.001)       // 默认露出 60%
     XCTAssertEqual(mascot.restingHeight, 40, accuracy: 0.001)  // 其余压在卡片上，用于预留顶部空间
     XCTAssertEqual(mascot.anchor, .center)
+    XCTAssertFalse(mascot.animated)
 
     let request = OverlayRequest(mascot: mascot, title: "Hi")
     XCTAssertNotNil(request.mascot)

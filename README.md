@@ -102,8 +102,8 @@ contentView.skeleton(isLoading, configuration: .buzzme)
 
 `SwiftUIBoostOverlay` 对齐 Buzzme 设计稿，提供三种弹窗样式，视觉 token 集中在 `OverlayTheme`：
 
-- `.alert`：居中白卡（r18、宽 300），标题 + 说明 + 横排胶囊按钮（`.cancel` 自动置左，≤2 横排等宽），弹性缩放入场。
-- `.actionSheet`：底部卡（grabber + 一列行）+ 独立 Cancel 卡；行支持副标题与 destructive，底部滑入。
+- `.alert`：居中白卡（r18、宽 300），标题 + 说明 + 横排胶囊按钮（`.cancel` 自动置左，≤2 横排等宽），原地淡入。
+- `.actionSheet`：底部卡（grabber + 一列行）+ 独立 Cancel 卡；行支持副标题与 destructive，底部滑入，并自动避让底部安全区。弹窗显示期间底层 TabBar 会停止命中测试，点击和长按都不会穿透。
 - `.hero`：居中白卡（r22、宽 310），顶部图标徽章（底色可配）+ 标题 + 说明 + 主按钮(填充) + 次按钮(纯文字)。
 
 命令式（协调器 + 宿主，可挂到任意 View 或独立 Window）：
@@ -147,7 +147,7 @@ Overlay.hero(icon: .system("bell.badge.fill"),
 
 #### 动画形象（趴在窗口）
 
-任意样式都可以让一个吉祥物 / 插画「趴」在弹窗顶沿：形象露出上半身、其余压在卡片边缘，入场时从底部弹起扶正并持续做柔和呼吸（`Reduce Motion` 下静止）。
+任意样式都可以让一个吉祥物 / 插画「趴」在弹窗顶沿：形象露出上半身、其余压在卡片边缘。居中弹窗只在最终位置原地淡入，不做缩放或位移；形象、标题和按钮始终保持在固定位置。
 
 ```swift
 overlays.present(

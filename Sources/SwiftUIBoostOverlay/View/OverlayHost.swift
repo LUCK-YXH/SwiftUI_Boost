@@ -42,8 +42,8 @@ public struct OverlayHost: View {
         }
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .ignoresSafeArea()
     }
-    .ignoresSafeArea()
     .allowsHitTesting(current != nil)
     .onAppear { sync(animated: false) }
     .onChange(of: coordinator.request?.id) { _ in sync() }
@@ -79,12 +79,17 @@ public struct OverlayHost: View {
     switch style {
     // 底部面板：平顺贴合的滑入，几乎不回弹。
     case .actionSheet: return .spring(response: 0.42, dampingFraction: 0.88)
-    // 居中卡片：轻微过冲的「弹跳」入场，更亲和。
-    case .alert, .hero, .custom: return .spring(response: 0.4, dampingFraction: 0.68)
+    // 居中卡片：与 NoticeHost 共用同一节奏，只淡入，不缩放、不位移。
+    case .alert, .hero, .custom: return .easeInOut(duration: 0.22)
     }
   }
 
   private func transition(for request: OverlayRequest) -> AnyTransition {
+    // 趴窗形象属于卡片整体，始终原地淡入，避免 IP 形象跟着缩放或位移。
+    if request.mascot != nil {
+      return .opacity
+    }
+
     if let transition = request.transition {
       switch transition {
       case .fade: return .opacity
@@ -97,11 +102,9 @@ public struct OverlayHost: View {
 
     switch request.style {
     case .actionSheet: return .move(edge: .bottom).combined(with: .opacity)
-    // 从稍小并略微下移处弹起，配合过冲弹簧得到柔和的 pop-in。
+    // 居中弹窗只在原位淡入，避免内容看起来在二次布局。
     case .alert, .hero, .custom:
-      return .scale(scale: 0.88, anchor: .center)
-        .combined(with: .opacity)
-        .combined(with: .offset(y: 12))
+      return .opacity
     }
   }
 }
@@ -536,21 +539,13 @@ private struct OverlayHeroCard: View {
 
 // MARK: - Mascot（趴在弹窗顶沿的动画形象）
 
-/// 入场时从底部「弹起 / 探头」并轻轻扶正，随后持续做柔和的上下呼吸。
+/// 形象固定在卡片顶沿，只跟随弹窗整体的淡入出现。
 private struct MascotView: View {
   let mascot: OverlayMascot
-  @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  @State private var landed = false
-  @State private var bob: CGFloat = 0
 
   var body: some View {
     glyph
       .frame(width: mascot.size.width, height: mascot.size.height)
-      .scaleEffect(landed ? 1 : 0.4, anchor: .bottom)
-      .rotationEffect(.degrees(landed ? 0 : -8), anchor: .bottom)
-      .opacity(landed ? 1 : 0)
-      .offset(y: bob)
-      .onAppear(perform: start)
   }
 
   @ViewBuilder private var glyph: some View {
@@ -561,19 +556,6 @@ private struct MascotView: View {
       image.resizable().scaledToFit()
     case .view(let view):
       view
-    }
-  }
-
-  private func start() {
-    guard mascot.animated, !reduceMotion else {
-      landed = true
-      return
-    }
-    withAnimation(.spring(response: 0.5, dampingFraction: 0.56).delay(0.06)) {
-      landed = true
-    }
-    withAnimation(.easeInOut(duration: 1.9).repeatForever(autoreverses: true).delay(0.65)) {
-      bob = -5
     }
   }
 }
@@ -599,6 +581,33 @@ private struct OverlayHighlightStyle: ButtonStyle {
 
 extension View {
   public func boostOverlay(_ coordinator: OverlayCoordinator, theme: OverlayTheme = .default) -> some View {
-    overlay(OverlayHost(coordinator: coordinator, theme: theme))
+    OverlayContainer(coordinator: coordinator, theme: theme) { self }
+  }
+}
+
+/// 弹窗显示期间关闭底层内容的命中测试，避免长按等手势继续落到 TabBar。
+private struct OverlayContainer<Content: View>: View {
+  @ObservedObject var coordinator: OverlayCoordinator
+  let theme: OverlayTheme
+  let content: Content
+
+  init(
+    coordinator: OverlayCoordinator,
+    theme: OverlayTheme,
+    @ViewBuilder content: () -> Content
+  ) {
+    self.coordinator = coordinator
+    self.theme = theme
+    self.content = content()
+  }
+
+  var body: some View {
+    ZStack {
+      content
+        .allowsHitTesting(coordinator.request == nil)
+
+      OverlayHost(coordinator: coordinator, theme: theme)
+        .zIndex(1)
+    }
   }
 }

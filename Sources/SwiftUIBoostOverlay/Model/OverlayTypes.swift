@@ -36,7 +36,7 @@ public enum OverlayIcon {
 /// 「趴」在弹窗顶沿的动画形象（吉祥物 / 插画）。
 ///
 /// 形象整体渲染在卡片上方，靠 `overhang` 露出上半身、其余压在卡片顶部边缘，
-/// 形成「探出头 / 趴在窗口上」的效果；入场时会从底部弹起并轻轻上下呼吸。
+/// 形成「探出头 / 趴在窗口上」的效果，并始终固定在卡片顶沿。
 public struct OverlayMascot {
   public enum Content {
     case system(String)
@@ -58,7 +58,7 @@ public struct OverlayMascot {
   public var overhang: CGFloat
   /// 距卡片左 / 右边缘的横向内边距，仅 `.leading` / `.trailing` 生效。
   public var horizontalInset: CGFloat
-  /// 是否播放入场弹起与持续呼吸动画（`Reduce Motion` 开启时自动禁用）。
+  /// 兼容旧版本 API；形象当前始终固定，不播放位置、缩放或呼吸动画。
   public var animated: Bool
 
   public init(
@@ -67,7 +67,7 @@ public struct OverlayMascot {
     anchor: Anchor = .center,
     overhang: CGFloat? = nil,
     horizontalInset: CGFloat = 20,
-    animated: Bool = true
+    animated: Bool = false
   ) {
     self.content = content
     self.size = size
