@@ -563,23 +563,64 @@ private struct ComponentsDemoView: View {
 
   var body: some View {
     List {
-      Section("覆盖层") {
-        Button("显示 Alert") {
+      Section("Alert 居中弹窗") {
+        Button("确认 / 取消") {
           overlays.present(
             .init(
-              title: "确认操作",
-              message: "这是一个 SwiftUI 覆盖层示例",
-              actions: [.init("确定") {}]
+              title: "Block Maya?",
+              message: "She won't be able to reach you or see your profile.",
+              actions: [
+                .init("Cancel", style: .cancel),
+                .init("Block", style: .destructive) {}
+              ],
+              dismissOnBackgroundTap: false
             )
           )
         }
-        Button("显示 Hero") {
+        Button("单个操作") {
+          overlays.present(
+            .init(
+              title: "已保存",
+              message: "你的修改已经同步到云端。",
+              actions: [.init("知道了", style: .primary) {}]
+            )
+          )
+        }
+      }
+
+      Section("Action Sheet 底部面板") {
+        Button("带副标题的行 + Cancel 卡") {
+          overlays.present(
+            .init(
+              style: .actionSheet,
+              actions: [
+                .init("View profile") {},
+                .init(
+                  "Block Maya",
+                  subtitle: "She won't be able to reach you",
+                  style: .destructive
+                ) {},
+                .init("Report", subtitle: "Let us know what's wrong") {},
+                .init("Cancel", style: .cancel)
+              ]
+            )
+          )
+        }
+      }
+
+      Section("Hero 图标弹窗") {
+        Button("图标徽章 + 主/次按钮") {
           overlays.present(
             .init(
               style: .hero,
-              title: "欢迎使用",
-              message: "这是 Hero 风格的覆盖层",
-              actions: [.init("开始使用") {}]
+              icon: .system("bell.badge.fill"),
+              iconBackground: Color(red: 0.98, green: 0.95, blue: 0.88),
+              title: "Turn on alerts?",
+              message: "Get notified the moment someone buzzes you.",
+              actions: [
+                .init("Not now", style: .cancel),
+                .init("Allow", style: .primary) {}
+              ]
             )
           )
         }

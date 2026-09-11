@@ -109,6 +109,8 @@ public struct OverlayRequest: Identifiable {
   public let id = UUID()
   public var style: OverlayStyle
   public var icon: OverlayIcon?
+  /// Hero 图标徽章底色；`nil` 时使用主题默认色。仅 `.hero` 样式生效。
+  public var iconBackground: Color?
   public var title: String
   public var subtitle: String?
   public var actions: [OverlayAction]
@@ -124,6 +126,7 @@ public struct OverlayRequest: Identifiable {
   public init(
     style: OverlayStyle = .alert,
     icon: OverlayIcon? = nil,
+    iconBackground: Color? = nil,
     title: String,
     subtitle: String? = nil,
     actions: [OverlayAction] = [],
@@ -137,6 +140,7 @@ public struct OverlayRequest: Identifiable {
   ) {
     self.style = style
     self.icon = icon
+    self.iconBackground = iconBackground
     self.title = title
     self.subtitle = subtitle
     self.actions = actions
@@ -170,6 +174,7 @@ public struct OverlayRequest: Identifiable {
   public static func custom<Content: View>(
     style: OverlayStyle = .custom,
     icon: OverlayIcon? = nil,
+    iconBackground: Color? = nil,
     title: String = "",
     subtitle: String? = nil,
     actions: [OverlayAction] = [],
@@ -185,6 +190,7 @@ public struct OverlayRequest: Identifiable {
     var request = OverlayRequest(
       style: style,
       icon: icon,
+      iconBackground: iconBackground,
       title: title,
       subtitle: subtitle,
       actions: actions,

@@ -93,6 +93,60 @@ final class SwiftUIBoostTests: XCTestCase {
     XCTAssertNotNil(request.customContent)
   }
 
+  func testOverlayThemeMatchesBuzzmeDesignTokens() {
+    let theme = OverlayTheme.default
+
+    XCTAssertEqual(theme.alert.cornerRadius, 18)
+    XCTAssertEqual(theme.alert.width, 300)
+    XCTAssertEqual(theme.alert.dimOpacity, 0.45, accuracy: 0.001)
+    XCTAssertEqual(theme.sheet.cornerRadius, 20)
+    XCTAssertEqual(theme.sheet.cancelHeight, 56)
+    XCTAssertEqual(theme.hero.width, 310)
+    XCTAssertEqual(theme.hero.iconSize, 52)
+  }
+
+#if canImport(UIKit)
+  @MainActor
+  func testOverlayConfirmBuildsCancelFirstAlert() {
+    var confirmed = false
+    Overlay.coordinator.dismiss()
+    Overlay.confirm(
+      title: "Block Maya?",
+      message: "She won't be able to reach you.",
+      confirmTitle: "Block",
+      destructive: true
+    ) { confirmed = true }
+
+    let request = Overlay.coordinator.request
+    XCTAssertEqual(request?.style, .alert)
+    XCTAssertEqual(request?.actions.map(\.style), [.cancel, .destructive])
+    XCTAssertFalse(request?.dismissOnBackgroundTap ?? true)
+
+    request?.actions.last?.action?()
+    XCTAssertTrue(confirmed)
+    Overlay.coordinator.dismiss()
+  }
+
+  @MainActor
+  func testOverlayHeroCarriesIconBackgroundAndActions() {
+    Overlay.coordinator.dismiss()
+    Overlay.hero(
+      icon: .system("bell.badge"),
+      iconBackground: .yellow,
+      title: "Turn on alerts?",
+      message: "Stay in the loop.",
+      primaryTitle: "Allow",
+      cancelTitle: "Not now"
+    ) {}
+
+    let request = Overlay.coordinator.request
+    XCTAssertEqual(request?.style, .hero)
+    XCTAssertNotNil(request?.iconBackground)
+    XCTAssertEqual(request?.actions.map(\.style), [.cancel, .primary])
+    Overlay.coordinator.dismiss()
+  }
+#endif
+
   @MainActor
   func testOldActionCannotDismissAReplacementPopup() {
     let coordinator = OverlayCoordinator()

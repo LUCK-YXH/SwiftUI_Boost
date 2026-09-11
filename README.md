@@ -10,7 +10,7 @@ SwiftUI 常用 UI 能力的模块化仓库。实现以 SwiftUI 为主，不保�
 | `SwiftUIBoostPlaceholder` | 空内容、无网络、加载失败、无搜索结果、无权限、自定义操作 | `SwiftUIBoost/Placeholder` |
 | `SwiftUIBoostSkeleton` | Buzzme 风格 placeholder redaction、渐变 shimmer、块/圆形/胶囊骨架组件 | `SwiftUIBoost/Skeleton` |
 | `SwiftUIBoostPager` | 横向/纵向分页卡片、peek、间距、初始位置、方向配置 | `SwiftUIBoost/Pager` |
-| `SwiftUIBoostOverlay` | Alert、Sheet、Hero 风格覆盖层、操作按钮、背景点击关闭 | `SwiftUIBoost/Overlay` |
+| `SwiftUIBoostOverlay` | Alert / Action Sheet / Hero 三种弹窗、副标题行、destructive、独立 Cancel 卡、图标徽章、弹性动画、集中主题、Veil 式一行调用 | `SwiftUIBoost/Overlay` |
 
 ## Swift Package
 
@@ -97,6 +97,51 @@ struct FeedSkeleton: View {
 ```swift
 contentView.skeleton(isLoading, configuration: .buzzme)
 ```
+
+### 弹窗（Overlay / Pop）
+
+`SwiftUIBoostOverlay` 对齐 Buzzme 设计稿，提供三种弹窗样式，视觉 token 集中在 `OverlayTheme`：
+
+- `.alert`：居中白卡（r18、宽 300），标题 + 说明 + 横排胶囊按钮（`.cancel` 自动置左，≤2 横排等宽），弹性缩放入场。
+- `.actionSheet`：底部卡（grabber + 一列行）+ 独立 Cancel 卡；行支持副标题与 destructive，底部滑入。
+- `.hero`：居中白卡（r22、宽 310），顶部图标徽章（底色可配）+ 标题 + 说明 + 主按钮(填充) + 次按钮(纯文字)。
+
+命令式（协调器 + 宿主，可挂到任意 View 或独立 Window）：
+
+```swift
+@StateObject private var overlays = OverlayCoordinator()
+
+var body: some View {
+    RootView()
+        .boostOverlay(overlays)            // 或 .overlayWindowHost(overlays) 挂到独立 Window
+}
+
+overlays.present(
+    .init(
+        style: .actionSheet,
+        actions: [
+            .init("View profile") {},
+            .init("Block Maya", subtitle: "She won't be able to reach you", style: .destructive) {},
+            .init("Cancel", style: .cancel)   // 自动渲染为底部独立 Cancel 卡
+        ]
+    )
+)
+```
+
+Veil 式一行调用（首次使用自动在独立 Window 安装共享协调器，无需布线）：
+
+```swift
+Overlay.confirm(title: "Block Maya?",
+                message: "She won't be able to reach you.",
+                confirmTitle: "Block", destructive: true) { blockUser() }
+
+Overlay.hero(icon: .system("bell.badge.fill"),
+             iconBackground: Color(red: 0.98, green: 0.95, blue: 0.88),
+             title: "Turn on alerts?", message: "Stay in the loop.",
+             primaryTitle: "Allow", cancelTitle: "Not now") { requestPush() }
+```
+
+需要定制外观时构造 `OverlayTheme` 并传入 `boostOverlay(_:theme:)` / `Overlay.configure(theme:)`。
 
 > 注意：根目录的 `Package.swift` 是 iOS 模块包，不是可执行 App；请使用示例工程打开并选择 iOS Simulator 或真机运行。示例工程通过本地 Swift Package 依赖根目录包，并已配置 iOS 15.0。
 

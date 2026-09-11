@@ -11,7 +11,10 @@ public final class OverlayWindowPresenter {
 
   private init() {}
 
-  public func show(_ coordinator: OverlayCoordinator, in scene: UIWindowScene? = nil) {
+  /// 窗口是否已挂载（存在前台场景时 `show` 成功后为 `true`）。
+  public var isPresenting: Bool { window != nil }
+
+  public func show(_ coordinator: OverlayCoordinator, theme: OverlayTheme = .default, in scene: UIWindowScene? = nil) {
     dismiss()
     self.coordinator = coordinator
 
@@ -23,7 +26,7 @@ public final class OverlayWindowPresenter {
     let window = UIWindow(windowScene: targetScene)
     window.windowLevel = .alert + 1
     window.backgroundColor = .clear
-    window.rootViewController = UIHostingController(rootView: OverlayHost(coordinator: coordinator))
+    window.rootViewController = UIHostingController(rootView: OverlayHost(coordinator: coordinator, theme: theme))
     window.rootViewController?.view.backgroundColor = .clear
     window.isHidden = false
     self.window = window
@@ -38,9 +41,9 @@ public final class OverlayWindowPresenter {
 }
 
 extension View {
-  public func overlayWindowHost(_ coordinator: OverlayCoordinator) -> some View {
+  public func overlayWindowHost(_ coordinator: OverlayCoordinator, theme: OverlayTheme = .default) -> some View {
     onAppear {
-      OverlayWindowPresenter.shared.show(coordinator)
+      OverlayWindowPresenter.shared.show(coordinator, theme: theme)
     }
     .onDisappear {
       OverlayWindowPresenter.shared.dismiss()
