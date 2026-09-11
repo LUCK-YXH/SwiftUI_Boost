@@ -63,8 +63,10 @@ public struct OverlayHost: View {
 
   private func animation(for style: OverlayStyle) -> Animation {
     switch style {
-    case .actionSheet: return .spring(response: 0.36, dampingFraction: 0.86)
-    case .alert, .hero, .custom: return .spring(response: 0.42, dampingFraction: 0.72)
+    // 底部面板：平顺贴合的滑入，几乎不回弹。
+    case .actionSheet: return .spring(response: 0.42, dampingFraction: 0.88)
+    // 居中卡片：轻微过冲的「弹跳」入场，更亲和。
+    case .alert, .hero, .custom: return .spring(response: 0.4, dampingFraction: 0.68)
     }
   }
 
@@ -72,7 +74,7 @@ public struct OverlayHost: View {
     if let transition = request.transition {
       switch transition {
       case .fade: return .opacity
-      case .scale: return .scale(scale: 0.6).combined(with: .opacity)
+      case .scale: return .scale(scale: 0.88, anchor: .center).combined(with: .opacity)
       case .slide, .slideFromBottom: return .move(edge: .bottom).combined(with: .opacity)
       case .none: return .identity
       case .custom(let value): return value
@@ -81,7 +83,11 @@ public struct OverlayHost: View {
 
     switch request.style {
     case .actionSheet: return .move(edge: .bottom).combined(with: .opacity)
-    case .alert, .hero, .custom: return .scale(scale: 0.6).combined(with: .opacity)
+    // 从稍小并略微下移处弹起，配合过冲弹簧得到柔和的 pop-in。
+    case .alert, .hero, .custom:
+      return .scale(scale: 0.88, anchor: .center)
+        .combined(with: .opacity)
+        .combined(with: .offset(y: 12))
     }
   }
 }
@@ -95,20 +101,44 @@ private struct OverlayCard: View {
   @GestureState private var dragOffset: CGFloat = 0
 
   var body: some View {
-    content
-      .offset(y: dragOffset)
-      .gesture(swipeGesture)
+    Group {
+      if let mascot = request.mascot {
+        ZStack(alignment: stackAlignment(mascot.anchor)) {
+          card(topInset: mascot.restingHeight)
+          MascotView(mascot: mascot)
+            .offset(y: -mascot.overhang)
+            .padding(.horizontal, mascotEdgeInset(mascot))
+            .allowsHitTesting(false)
+        }
+      } else {
+        card(topInset: 0)
+      }
+    }
+    .offset(y: dragOffset)
+    .gesture(swipeGesture)
   }
 
-  @ViewBuilder private var content: some View {
+  @ViewBuilder private func card(topInset: CGFloat) -> some View {
     switch request.style {
     case .actionSheet:
-      OverlayActionSheet(request: request, theme: theme.sheet, dismiss: dismiss)
+      OverlayActionSheet(request: request, theme: theme.sheet, topInset: topInset, dismiss: dismiss)
     case .hero:
-      OverlayHeroCard(request: request, theme: theme.hero, dismiss: dismiss)
+      OverlayHeroCard(request: request, theme: theme.hero, topInset: topInset, dismiss: dismiss)
     case .alert, .custom:
-      OverlayAlertCard(request: request, theme: theme.alert, dismiss: dismiss)
+      OverlayAlertCard(request: request, theme: theme.alert, topInset: topInset, dismiss: dismiss)
     }
+  }
+
+  private func stackAlignment(_ anchor: OverlayMascot.Anchor) -> Alignment {
+    switch anchor {
+    case .leading: return .topLeading
+    case .center: return .top
+    case .trailing: return .topTrailing
+    }
+  }
+
+  private func mascotEdgeInset(_ mascot: OverlayMascot) -> CGFloat {
+    mascot.anchor == .center ? 0 : mascot.horizontalInset
   }
 
   private var swipeGesture: some Gesture {
@@ -129,6 +159,7 @@ private struct OverlayCard: View {
 private struct OverlayAlertCard: View {
   let request: OverlayRequest
   let theme: OverlayTheme.Alert
+  var topInset: CGFloat = 0
   let dismiss: (OverlayDismissReason) -> Void
 
   var body: some View {
@@ -161,7 +192,7 @@ private struct OverlayAlertCard: View {
       .padding(.top, hasHeaderText || request.customContent != nil ? 20 : 0)
     }
     .padding(.horizontal, 20)
-    .padding(.top, 22)
+    .padding(.top, 22 + topInset)
     .padding(.bottom, 20)
     .frame(width: theme.width)
     .background(theme.cardColor)
@@ -266,6 +297,7 @@ private struct OverlayButtonRow: View {
 private struct OverlayActionSheet: View {
   let request: OverlayRequest
   let theme: OverlayTheme.Sheet
+  var topInset: CGFloat = 0
   let dismiss: (OverlayDismissReason) -> Void
 
   private var rows: [OverlayAction] { request.actions.filter { $0.style != .cancel } }
@@ -300,7 +332,7 @@ private struct OverlayActionSheet: View {
       RoundedRectangle(cornerRadius: theme.grabberSize.height / 2, style: .continuous)
         .fill(theme.grabberColor)
         .frame(width: theme.grabberSize.width, height: theme.grabberSize.height)
-        .padding(.top, 10)
+        .padding(.top, 10 + topInset)
 
       if hasHeader {
         header.padding(.top, 14).padding(.horizontal, theme.rowInset)
@@ -393,6 +425,7 @@ private struct OverlaySheetRow: View {
 private struct OverlayHeroCard: View {
   let request: OverlayRequest
   let theme: OverlayTheme.Hero
+  var topInset: CGFloat = 0
   let dismiss: (OverlayDismissReason) -> Void
 
   private var primary: OverlayAction? { request.actions.first { $0.style != .cancel } }
@@ -449,7 +482,7 @@ private struct OverlayHeroCard: View {
       }
     }
     .padding(.horizontal, 22)
-    .padding(.top, 26)
+    .padding(.top, 26 + topInset)
     .padding(.bottom, 22)
     .frame(width: theme.width)
     .background(theme.cardColor)
@@ -483,6 +516,50 @@ private struct OverlayHeroCard: View {
     action.action?()
     if request.dismissOnAction && action.dismissesOverlay {
       dismiss(.action)
+    }
+  }
+}
+
+// MARK: - Mascot（趴在弹窗顶沿的动画形象）
+
+/// 入场时从底部「弹起 / 探头」并轻轻扶正，随后持续做柔和的上下呼吸。
+private struct MascotView: View {
+  let mascot: OverlayMascot
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @State private var landed = false
+  @State private var bob: CGFloat = 0
+
+  var body: some View {
+    glyph
+      .frame(width: mascot.size.width, height: mascot.size.height)
+      .scaleEffect(landed ? 1 : 0.4, anchor: .bottom)
+      .rotationEffect(.degrees(landed ? 0 : -8), anchor: .bottom)
+      .opacity(landed ? 1 : 0)
+      .offset(y: bob)
+      .onAppear(perform: start)
+  }
+
+  @ViewBuilder private var glyph: some View {
+    switch mascot.content {
+    case .system(let name):
+      Image(systemName: name).resizable().scaledToFit()
+    case .image(let image):
+      image.resizable().scaledToFit()
+    case .view(let view):
+      view
+    }
+  }
+
+  private func start() {
+    guard mascot.animated, !reduceMotion else {
+      landed = true
+      return
+    }
+    withAnimation(.spring(response: 0.5, dampingFraction: 0.56).delay(0.06)) {
+      landed = true
+    }
+    withAnimation(.easeInOut(duration: 1.9).repeatForever(autoreverses: true).delay(0.65)) {
+      bob = -5
     }
   }
 }

@@ -105,6 +105,17 @@ final class SwiftUIBoostTests: XCTestCase {
     XCTAssertEqual(theme.hero.iconSize, 52)
   }
 
+  func testOverlayMascotPerchesAndReservesHeadroom() {
+    let mascot = OverlayMascot.system("teddybear.fill", size: CGSize(width: 100, height: 100))
+    XCTAssertEqual(mascot.overhang, 60, accuracy: 0.001)       // 默认露出 60%
+    XCTAssertEqual(mascot.restingHeight, 40, accuracy: 0.001)  // 其余压在卡片上，用于预留顶部空间
+    XCTAssertEqual(mascot.anchor, .center)
+
+    let request = OverlayRequest(mascot: mascot, title: "Hi")
+    XCTAssertNotNil(request.mascot)
+    XCTAssertEqual(request.mascot?.size.height, 100)
+  }
+
 #if canImport(UIKit)
   @MainActor
   func testOverlayConfirmBuildsCancelFirstAlert() {

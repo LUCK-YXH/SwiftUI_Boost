@@ -625,6 +625,36 @@ private struct ComponentsDemoView: View {
           )
         }
       }
+
+      Section("动画形象趴窗") {
+        Button("吉祥物趴在弹窗顶部") {
+          overlays.present(
+            .init(
+              mascot: .view(size: CGSize(width: 120, height: 120)) {
+                Text("🐻").font(.system(size: 96))
+              },
+              title: "又见面啦！",
+              subtitle: "我一直趴在这儿等你回来～",
+              actions: [
+                .init("以后再说", style: .cancel),
+                .init("打个招呼", style: .primary) {}
+              ]
+            )
+          )
+        }
+        Button("形象靠右趴在 Alert 上") {
+          overlays.present(
+            .init(
+              mascot: .view(size: CGSize(width: 88, height: 88), anchor: .trailing) {
+                Text("🐰").font(.system(size: 68))
+              },
+              title: "领取每日奖励",
+              subtitle: "连续登录 3 天即可解锁限定表情。",
+              actions: [.init("知道了", style: .primary) {}]
+            )
+          )
+        }
+      }
     }
   }
 }

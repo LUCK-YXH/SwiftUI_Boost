@@ -10,7 +10,7 @@ SwiftUI 常用 UI 能力的模块化仓库。实现以 SwiftUI 为主，不保�
 | `SwiftUIBoostPlaceholder` | 空内容、无网络、加载失败、无搜索结果、无权限、自定义操作 | `SwiftUIBoost/Placeholder` |
 | `SwiftUIBoostSkeleton` | Buzzme 风格 placeholder redaction、渐变 shimmer、块/圆形/胶囊骨架组件 | `SwiftUIBoost/Skeleton` |
 | `SwiftUIBoostPager` | 横向/纵向分页卡片、peek、间距、初始位置、方向配置 | `SwiftUIBoost/Pager` |
-| `SwiftUIBoostOverlay` | Alert / Action Sheet / Hero 三种弹窗、副标题行、destructive、独立 Cancel 卡、图标徽章、弹性动画、集中主题、Veil 式一行调用 | `SwiftUIBoost/Overlay` |
+| `SwiftUIBoostOverlay` | Alert / Action Sheet / Hero 三种弹窗、副标题行、destructive、独立 Cancel 卡、图标徽章、动画形象趴窗、弹性动画、集中主题、Veil 式一行调用 | `SwiftUIBoost/Overlay` |
 
 ## Swift Package
 
@@ -142,6 +142,30 @@ Overlay.hero(icon: .system("bell.badge.fill"),
 ```
 
 需要定制外观时构造 `OverlayTheme` 并传入 `boostOverlay(_:theme:)` / `Overlay.configure(theme:)`。
+
+居中卡片采用轻微过冲的弹簧入场（`Reduce Motion` 会自动降级），底部面板则平顺贴合滑入。
+
+#### 动画形象（趴在窗口）
+
+任意样式都可以让一个吉祥物 / 插画「趴」在弹窗顶沿：形象露出上半身、其余压在卡片边缘，入场时从底部弹起扶正并持续做柔和呼吸（`Reduce Motion` 下静止）。
+
+```swift
+overlays.present(
+    .init(
+        mascot: .view(size: CGSize(width: 120, height: 120)) {
+            Image("mascot").resizable().scaledToFit()   // 也可 .system(_) / .image(_)
+        },                                               // anchor: .leading / .center / .trailing
+        title: "又见面啦！",
+        subtitle: "我一直趴在这儿等你回来～",
+        actions: [
+            .init("以后再说", style: .cancel),
+            .init("打个招呼", style: .primary) { sayHi() }
+        ]
+    )
+)
+```
+
+卡片会依据 `OverlayMascot.restingHeight` 自动预留顶部空间，标题不会被形象遮挡。
 
 > 注意：根目录的 `Package.swift` 是 iOS 模块包，不是可执行 App；请使用示例工程打开并选择 iOS Simulator 或真机运行。示例工程通过本地 Swift Package 依赖根目录包，并已配置 iOS 15.0。
 

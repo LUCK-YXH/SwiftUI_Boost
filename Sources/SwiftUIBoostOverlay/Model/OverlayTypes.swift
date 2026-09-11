@@ -33,6 +33,78 @@ public enum OverlayIcon {
   }
 }
 
+/// 「趴」在弹窗顶沿的动画形象（吉祥物 / 插画）。
+///
+/// 形象整体渲染在卡片上方，靠 `overhang` 露出上半身、其余压在卡片顶部边缘，
+/// 形成「探出头 / 趴在窗口上」的效果；入场时会从底部弹起并轻轻上下呼吸。
+public struct OverlayMascot {
+  public enum Content {
+    case system(String)
+    case image(Image)
+    case view(AnyView)
+  }
+
+  /// 形象在卡片横向上的落点。
+  public enum Anchor: Equatable {
+    case leading
+    case center
+    case trailing
+  }
+
+  public var content: Content
+  public var size: CGSize
+  public var anchor: Anchor
+  /// 露出卡片顶沿的高度（越大越「站得高」；其余 `size.height - overhang` 压在卡片上）。
+  public var overhang: CGFloat
+  /// 距卡片左 / 右边缘的横向内边距，仅 `.leading` / `.trailing` 生效。
+  public var horizontalInset: CGFloat
+  /// 是否播放入场弹起与持续呼吸动画（`Reduce Motion` 开启时自动禁用）。
+  public var animated: Bool
+
+  public init(
+    content: Content,
+    size: CGSize = CGSize(width: 104, height: 104),
+    anchor: Anchor = .center,
+    overhang: CGFloat? = nil,
+    horizontalInset: CGFloat = 20,
+    animated: Bool = true
+  ) {
+    self.content = content
+    self.size = size
+    self.anchor = anchor
+    self.overhang = overhang ?? size.height * 0.6
+    self.horizontalInset = horizontalInset
+    self.animated = animated
+  }
+
+  /// 压在卡片上、需要为其预留的顶部空间。
+  public var restingHeight: CGFloat { max(0, size.height - overhang) }
+
+  public static func system(
+    _ name: String,
+    size: CGSize = CGSize(width: 104, height: 104),
+    anchor: Anchor = .center
+  ) -> OverlayMascot {
+    OverlayMascot(content: .system(name), size: size, anchor: anchor)
+  }
+
+  public static func image(
+    _ image: Image,
+    size: CGSize = CGSize(width: 104, height: 104),
+    anchor: Anchor = .center
+  ) -> OverlayMascot {
+    OverlayMascot(content: .image(image), size: size, anchor: anchor)
+  }
+
+  public static func view<V: View>(
+    size: CGSize = CGSize(width: 104, height: 104),
+    anchor: Anchor = .center,
+    @ViewBuilder _ content: () -> V
+  ) -> OverlayMascot {
+    OverlayMascot(content: .view(AnyView(content())), size: size, anchor: anchor)
+  }
+}
+
 public enum OverlayDismissReason: Equatable {
   case background
   case action
@@ -111,6 +183,8 @@ public struct OverlayRequest: Identifiable {
   public var icon: OverlayIcon?
   /// Hero 图标徽章底色；`nil` 时使用主题默认色。仅 `.hero` 样式生效。
   public var iconBackground: Color?
+  /// 趴在弹窗顶沿的动画形象；`nil` 时不显示。三种样式通用。
+  public var mascot: OverlayMascot?
   public var title: String
   public var subtitle: String?
   public var actions: [OverlayAction]
@@ -127,6 +201,7 @@ public struct OverlayRequest: Identifiable {
     style: OverlayStyle = .alert,
     icon: OverlayIcon? = nil,
     iconBackground: Color? = nil,
+    mascot: OverlayMascot? = nil,
     title: String = "",
     subtitle: String? = nil,
     actions: [OverlayAction] = [],
@@ -141,6 +216,7 @@ public struct OverlayRequest: Identifiable {
     self.style = style
     self.icon = icon
     self.iconBackground = iconBackground
+    self.mascot = mascot
     self.title = title
     self.subtitle = subtitle
     self.actions = actions
@@ -158,6 +234,7 @@ public struct OverlayRequest: Identifiable {
     style: OverlayStyle = .custom,
     icon: OverlayIcon? = nil,
     iconBackground: Color? = nil,
+    mascot: OverlayMascot? = nil,
     title: String = "",
     subtitle: String? = nil,
     actions: [OverlayAction] = [],
@@ -174,6 +251,7 @@ public struct OverlayRequest: Identifiable {
       style: style,
       icon: icon,
       iconBackground: iconBackground,
+      mascot: mascot,
       title: title,
       subtitle: subtitle,
       actions: actions,
